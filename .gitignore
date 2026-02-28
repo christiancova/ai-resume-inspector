@@ -12,3 +12,4 @@ wheels/
 .streamlit/secrets.toml
 __pycache__/
 .python-version
+.streamlit

@@ -1,3 +1,4 @@
+from math import e
 from openai.types import file_content
 from openai.types.responses import response
 import streamlit as st
@@ -9,7 +10,43 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-st.set_page_config(page_title="AI Resume Inspector", page_icon="🕵🏼", layout="centered") #name page/tab 
+st.set_page_config(page_title="AI Resume Inspector 🕵🏼", page_icon="🕵🏼", layout="centered")
+st.markdown("""
+<style>
+
+/* Main button (Spotify style) */
+.stButton > button {
+    background-color: #1DB954;
+    color: black;
+    font-weight: 600;
+    border-radius: 25px;
+    padding: 0.6em 1.4em;
+    border: none;
+    transition: 0.2s ease;
+}
+
+/* Hover effect */
+.stButton > button:hover {
+    background-color: #1ed760;
+    transform: scale(1.02);
+}
+
+/* File uploader box */
+section[data-testid="stFileUploader"] {
+    background-color: #121212;
+    border-radius: 12px;
+    padding: 10px;
+}
+
+/* Text input styling */
+input {
+    background-color: #121212 !important;
+    border-radius: 10px !important;
+    color: white !important;
+}
+
+</style>
+""", unsafe_allow_html=True) #name page/tab 
 
 st.title("AI Resume Inspector")
 st.markdown("Upload your resume and get personalized AI feedback to optimize it for recruiters and ATS systems.")
@@ -19,12 +56,14 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 uploaded_file = st.file_uploader("Upload your resume (PFD or TXT)", type=["pdf", "txt"])
 job_role = st.text_input("Enter the role you want your resume to be optimized for (optional)")
 
-analyze = st.button("Analyze Resume")
+col1, col2, col3 = st.columns([1,2,1])
+with col2:
+    analyze = st.button("Analyze Resume")
 
 def extract_text_from_pdf(pdf_file):
     pdf_reader = PyPDF2.PdfReader(pdf_file)
     text = ""
-    for page in pdf_reader:
+    for page in pdf_reader.pages:
         text += page.extract_text() + "\n"
     return text
 
@@ -97,8 +136,20 @@ Output format (use these headings):
 **Optional: Improved Summary (1–2 versions)**
 """
 
-client = OpenAI(api_key=OPENAI_API_KEY)
-response = client.chat.completions.create(
-    model="gpt-4.1-mini",
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {"role": "system", "content": "You are an expert resume reviewer with years of experience"},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.7,
+            max_tokens=1000,
+        )
 
-)
+        st.markdown("### Analysis Results")
+        st.markdown(response.choices[0].message.content)
+
+    except Exception as e:
+        st.error(f"An error ocurred: {str(e)}")
+
